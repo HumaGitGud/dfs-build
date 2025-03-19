@@ -15,22 +15,19 @@ public class Build {
    */
   public static void printShortWords(Vertex<String> vertex, int k) {
     Set<Vertex<String>> visited = new HashSet<>();
-    printShortWordsHelper(vertex, k, visited);
+    printShortWords(vertex, k, visited);
   }
   
-  private static void printShortWordsHelper(Vertex<String> vertex, int k, Set<Vertex<String>> visited) {
-    if (vertex == null || k <= 0 || visited.contains(vertex)) return;
+  private static void printShortWords(Vertex<String> vertex, int k, Set<Vertex<String>> visited) {
+    if (vertex == null || visited.contains(vertex)) return;
+    if (k <= 0) return;
 
     visited.add(vertex);
 
-    if (vertex.data.length() < k) {
-      System.out.println(vertex.data);
-    }
-
+    if (vertex.data.length() < k) System.out.println(vertex.data);
+    
     for (Vertex<String> neighbor : vertex.neighbors) {
-      if (neighbor.data.length() < k) {
-        printShortWordsHelper(neighbor, k, visited);
-      }
+      printShortWords(neighbor, k, visited);
     }
   }
 
@@ -42,10 +39,10 @@ public class Build {
    */
   public static String longestWord(Vertex<String> vertex) {
     Set<Vertex<String>> visited = new HashSet<>();
-    return longestWordHelper(vertex, visited);
+    return longestWord(vertex, visited);
   }
   
-  private static String longestWordHelper(Vertex<String> vertex, Set<Vertex<String>> visited) {
+  private static String longestWord(Vertex<String> vertex, Set<Vertex<String>> visited) {
     if (vertex == null || visited.contains(vertex)) return "";
 
     visited.add(vertex);
@@ -53,10 +50,8 @@ public class Build {
     String longest = vertex.data;
 
     for (Vertex<String> neighbor : vertex.neighbors) {
-      String neighborLongest = longestWordHelper(neighbor, visited);
-      if (neighborLongest.length() > longest.length()) {
-        longest = neighborLongest;
-      }
+      String current = longestWord(neighbor, visited);
+      if (current.length() > longest.length()) longest = current;
     }
 
     return longest;
@@ -71,21 +66,17 @@ public class Build {
    */
   public static <T> void printSelfLoopers(Vertex<T> vertex) {
     Set<Vertex<T>> visited = new HashSet<>();
-    printSelfLoopersHelper(vertex, visited);
+    printSelfLoopers(vertex, visited);
   }
-
   
-  private static <T> void printSelfLoopersHelper(Vertex<T> vertex, Set<Vertex<T>> visited) {
+  public static <T> void printSelfLoopers(Vertex<T> vertex, Set<Vertex<T>> visited) {
     if (vertex == null || visited.contains(vertex)) return;
 
     visited.add(vertex);
 
-    if (vertex.neighbors.contains(vertex)) {
-      System.out.println(vertex.data);
-    }
-
     for (Vertex<T> neighbor : vertex.neighbors) {
-      printSelfLoopersHelper(neighbor, visited);
+      if (neighbor.neighbors.contains(vertex)) System.out.println(vertex.data);
+      printSelfLoopers(neighbor, visited);
     }
   }
 
@@ -99,22 +90,27 @@ public class Build {
    */
   public static boolean canReach(Airport start, Airport destination) {
     Set<Airport> visited = new HashSet<>();
-    return canReachHelper(start, destination, visited);
+    return canReach(start, destination, visited);
   }
   
-  public static boolean canReachHelper(Airport start, Airport destination, Set<Airport> visited) {
-    if (start == null || destination == null) return false;
+  public static boolean canReach(Airport start, Airport destination, Set<Airport> visited) {
+    // Target base case: stop when we find destination
     if (start == destination) return true;
+
+    // Edge cases/ Base cases
+    if (start == null || destination == null) return false;
     if (visited.contains(start)) return false;
 
+    // add unique airport classes to hashset
     visited.add(start);
 
-    for (Airport next : start.getOutboundFlights()) {
-      if (canReachHelper(next, destination, visited)) {
-        return true;
-      }      
+    // recurse through each neighboring outbound flights of each airport
+    for (Airport neighborOutbound : start.getOutboundFlights()) {
+      // if we are able to recurse until we hit the target base case, return true
+      // in other words: if(path exists/successful) return true;
+      if(canReach(neighborOutbound, destination, visited)) return true;
     }
-
+    
     return false;
   }
 
@@ -129,22 +125,26 @@ public class Build {
    */
   public static <T> Set<T> unreachable(Map<T, List<T>> graph, T starting) {
     Set<T> visited = new HashSet<>();
+    Set<T> unvisited = new HashSet<>();
 
-    unreachableHelper(graph, starting, visited);
+    unreachable(graph, starting, visited);
 
-    Set<T> unreachableVertices = new HashSet<>(graph.keySet());
-    unreachableVertices.removeAll(visited);
-    
-    return unreachableVertices;
+    unvisited.addAll(graph.keySet());
+    unvisited.removeAll(visited);
+
+    return unvisited;
   }
+  
+  public static <T> void unreachable(Map<T, List<T>> graph, T starting, Set<T> visited) {
+    if (graph == null) return;
+    if (starting == null) return;
+    if (visited.contains(starting)) return;
+    if (!graph.containsKey(starting)) return;
 
-  private static <T> void unreachableHelper(Map<T, List<T>> graph, T vertex, Set<T> visited) {
-    if (vertex == null || visited.contains(vertex) || !graph.containsKey(vertex)) return;
-    
-    visited.add(vertex);
-    
-    for (T neighbor : graph.get(vertex)) {
-      unreachableHelper(graph, neighbor, visited);
+    visited.add(starting);
+
+    for (T neighbor : graph.get(starting)) {
+      unreachable(graph, neighbor, visited);
     }
   }
 }
